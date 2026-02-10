@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUMMSA Face of the Week</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; padding: 20px; }
+  .container { max-width: 500px; margin: auto; }
+  form, .list-section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
+  button { background: #3498db; color: #fff; border: none; cursor: pointer; font-weight: bold; }
+  .hidden { display: none; }
+  .pts { float: right; font-weight: bold; color: #e67e22; }
+  #statusHeader { text-align: center; color: #2c3e50; margin-bottom: 10px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>FUMMSA Face of the Week</h1>
+
+    <div id="statusHeader">
+      Slots Remaining: <span id="slotsLeft">20</span> / 20
+    </div>
+    
+    <div id="regSection">
+      <form id="registrationForm">
+        <h3>1. Register as a Contestant</h3>
+        <input type="text" id="regName" placeholder="Full Name" required>
+        <input type="text" id="regUsername" placeholder="TikTok Username" required>
+        <button type="submit">Join Contest</button>
+      </form>
+    </div>
+
+    <div id="refSection" class="hidden">
+      <form id="referralForm">
+        <h3 id="refTitle">Submit Support</h3>
+        
+        <div id="contestantControls" class="hidden">
+           <button type="button" id="shareBtn" style="background:#27ae60;">Copy My Referral Link 🔗</button>
+           <hr>
+        </div>
+
+        <div id="votingInputs">
+          <p id="refInstructions">Enter YOUR TikTok handle and a link to your proof to support this contestant:</p>
+          <input type="text" id="friendHandle" placeholder="YOUR TikTok Username">
+          <input type="url" id="proofLink" placeholder="Link to Proof (TikTok comment/Screenshot)">
+          <button type="submit" id="submitVoteBtn">Submit My Support</button>
+        </div>
+
+        <button type="button" onclick="logout()" style="background:#95a5a6; margin-top:5px;">Logout / Back to Home</button>
+      </form>
+    </div>
+
+    <div class="list-section">
+      <h3>🏆 Leaderboard</h3>
+      <ul id="leaderboard" style="list-style: none; padding: 0;"></ul>
+    </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, set, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  const firebaseConfig = {
+    databaseURL: "https://fummsa-face-of-the-week-default-rtdb.europe-west1.firebasedatabase.app/"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const clean = (str) => str.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  let currentCount = 0;
+  let referrerUid = ""; 
+
+  window.onload = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    referrerUid = clean(urlParams.get('ref') || "");
+    const savedUser = sessionStorage.getItem("fow_user");
+
+    if (savedUser) {
+      showDashboard(savedUser, true);
+    } else if (referrerUid) {
+      showDashboard(referrerUid, false);
+    }
+  };
+
+  function showDashboard(id, isOwner) {
+    document.getElementById('regSection').classList.add('hidden');
+    document.getElementById('refSection').classList.remove('hidden');
+    
+    if (isOwner) {
+      document.getElementById('refTitle').innerText = "Welcome, " + id;
+      document.getElementById('contestantControls').classList.remove('hidden');
+      document.getElementById('votingInputs').classList.add('hidden'); 
+    } else {
+      document.getElementById('refTitle').innerText = "Supporting: " + id;
+      document.getElementById('contestantControls').classList.add('hidden');
+      document.getElementById('votingInputs').classList.remove('hidden');
+    }
+  }
+
+  // Live Slot Counting
+  onValue(ref(db, 'participants'), (snap) => {
+    const data = snap.val() || {};
+    currentCount = Object.keys(data).length;
+    document.getElementById('slotsLeft').innerText = Math.max(0, 20 - currentCount);
+
+    if (currentCount >= 20 && !sessionStorage.getItem("fow_user") && !referrerUid) {
+      document.getElementById('registrationForm').innerHTML = "<p style='color:red; font-weight:bold; text-align:center;'>🚫 Registration Closed (20/20 Full)</p>";
+    }
+
+    const list = document.getElementById('leaderboard');
+    list.innerHTML = "";
+    Object.values(data).sort((a,b) => b.points - a.points).forEach((p, i) => {
+      list.innerHTML += `<li>#${i+1} ${p.name} <span class="pts">${p.points} Pts</span></li>`;
+    });
+  });
+
+  document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (currentCount >= 20) return alert("Contest is full!");
+    const name = document.getElementById('regName').value.trim();
+    const username = clean(document.getElementById('regUsername').value);
+
+    const userRef = ref(db, 'participants/' + username);
+    await set(userRef, { name: name, points: 0 });
+    sessionStorage.setItem("fow_user", username);
+    location.reload(); 
+  });
+
+  // FREE PROOF-LINK SYSTEM
+  document.getElementById('referralForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const friendHandle = clean(document.getElementById('friendHandle').value);
+    const proof = document.getElementById('proofLink').value;
+
+    if (!referrerUid || referrerUid === sessionStorage.getItem("fow_user")) {
+      return alert("Error: You cannot vote for yourself!");
+    }
+    if (!proof) return alert("Please provide a link to your proof!");
+
+    const usedRef = ref(db, 'usedHandles/' + friendHandle);
+    const usedSnap = await get(usedRef);
+    if (usedSnap.exists()) return alert("❌ This handle has already voted!");
+
+    const contestantRef = ref(db, 'participants/' + referrerUid);
+    const contestantSnap = await get(contestantRef);
+    if (!contestantSnap.exists()) return alert("❌ Contestant not found.");
+
+    await update(contestantRef, { points: (contestantSnap.val().points || 0) + 1 });
+    await set(usedRef, { votedFor: referrerUid, evidence: proof, timestamp: new Date().toLocaleString() });
+
+    alert("✅ Support recorded for " + referrerUid + "!");
+    e.target.reset();
+  });
+
+  document.getElementById('shareBtn').onclick = () => {
+    const link = window.location.origin + window.location.pathname + "?ref=" + sessionStorage.getItem("fow_user");
+    navigator.clipboard.writeText(link).then(() => alert("Referral link copied!"));
+  };
+
+  window.logout = () => {
+    sessionStorage.removeItem("fow_user");
+    window.location.href = window.location.origin + window.location.pathname;
+  };
+</script>
+</body>
+</html>
