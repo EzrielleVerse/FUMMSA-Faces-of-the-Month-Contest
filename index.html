@@ -5,13 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FUMMSA Face of the Week</title>
 <style>
-  body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; padding: 20px; }
+  /* Base Styles */
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; padding: 20px; color: #333; }
   .container { max-width: 500px; margin: auto; }
-  form, .list-section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-  input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
-  button { background: #3498db; color: #fff; border: none; cursor: pointer; font-weight: bold; }
+  
+  /* Section Card Styling */
+  form, .list-section { 
+    background: #fff; 
+    padding: 25px; 
+    margin-bottom: 25px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+  }
+
+  /* Input and Button Styling */
+  input, button { 
+    width: 100%; 
+    padding: 14px; 
+    margin: 10px 0; 
+    border-radius: 8px; 
+    border: 1px solid #ddd; 
+    box-sizing: border-box; 
+    font-size: 16px;
+  }
+  
+  button { 
+    background: #3498db; 
+    color: #fff; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold; 
+    transition: background 0.3s ease;
+  }
+  
+  button:hover { background: #2980b9; }
   .hidden { display: none; }
+  
+  /* Leaderboard Styling */
   .pts { float: right; font-weight: bold; color: #e67e22; }
+  h1, h3 { text-align: center; color: #2c3e50; }
+  hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+  
+  /* Table Styling for Admin */
+  table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-top: 10px; }
+  td { padding: 8px; border-bottom: 1px solid #eee; }
 </style>
 </head>
 <body>
@@ -19,13 +56,14 @@
 <div class="container">
     <h1>FUMMSA Face of the Week</h1>
 
-    <div style="text-align: center; margin-bottom: 10px;">
-      Slots Remaining: <span id="slotsLeft" style="font-weight:bold;">20</span> / 20
+    <div style="text-align: center; margin-bottom: 15px; font-size: 1.1em;">
+      Slots Remaining: <span id="slotsLeft" style="font-weight:bold; color: #e74c3c;">20</span> / 20
     </div>
     
     <div id="regSection">
       <form id="registrationForm">
-        <h3>1. Register as a Contestant</h3>
+        <h3>1. Contestant Registration</h3>
+        <p style="font-size: 0.9em; color: #666; text-align: center;">Join the Face of the Week challenge.</p>
         <input type="text" id="regName" placeholder="Full Name" required>
         <input type="text" id="regUsername" placeholder="TikTok Username" required>
         <button type="submit">Join Contest</button>
@@ -34,31 +72,45 @@
 
     <div id="refSection" class="hidden">
       <form id="referralForm">
-        <h3 id="refTitle">Submit Support</h3>
+        <h3 id="refTitle">Dashboard</h3>
+        
         <div id="contestantControls" class="hidden">
+           <p style="font-size: 0.9em; text-align: center;">Share your unique link to get points!</p>
            <button type="button" id="shareBtn" style="background:#27ae60;">Copy My Referral Link 🔗</button>
            <hr>
         </div>
+
         <div id="votingInputs">
-          <p id="refInstructions">Enter YOUR TikTok handle and upload proof to support this contestant:</p>
-          <input type="text" id="friendHandle" placeholder="YOUR TikTok Username" required>
-          <input type="file" id="screenshot" required>
-          <button type="submit">Submit My Vote</button>
+          <p id="refInstructions" style="text-align:center;">Enter your handle to support this contestant:</p>
+          <input type="text" id="friendHandle" placeholder="Your TikTok Username" required>
+          <button type="submit" id="voteBtn">Submit Vote (1 Point)</button>
         </div>
-        <button type="button" onclick="logout()" style="background:#95a5a6; margin-top:5px;">Logout / Back to Home</button>
+
+        <button type="button" onclick="logout()" style="background:#95a5a6; margin-top:10px;">Logout / Exit</button>
       </form>
     </div>
 
     <div class="list-section">
-      <h3>🏆 Leaderboard</h3>
+      <h3>🏆 Current Standings</h3>
       <ul id="leaderboard" style="list-style: none; padding: 0;"></ul>
     </div>
 
-    <div class="list-section" style="border-top: 2px solid #e74c3c; margin-top: 50px;">
-      <h3>🔍 Admin: Vote Verification</h3>
-      <button onclick="viewVotes()" style="background:#2c3e50;">View Voter List</button>
+    <div class="list-section" style="border-top: 3px solid #e74c3c; margin-top: 40px;">
+      <h3>🔍 Admin: Vote Logs</h3>
+      <button onclick="viewVotes()" style="background:#2c3e50;">Unlock Voter List</button>
       <button id="csvBtn" class="hidden" onclick="downloadCSV()" style="background:#27ae60; margin-top:10px;">Download Excel (CSV) 📊</button>
-      <ul id="adminVoteList" style="font-size: 0.8em; text-align: left; margin-top: 10px; padding-left: 20px;"></ul>
+      <div id="adminContainer" class="hidden">
+        <table>
+          <thead>
+            <tr style="text-align:left; border-bottom: 2px solid #ddd;">
+              <th>Voter</th>
+              <th>Supported</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="adminVoteList"></tbody>
+        </table>
+      </div>
     </div>
 </div>
 
@@ -66,9 +118,15 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getDatabase, ref, set, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-  // Using your specific Database URL provided
+  // --- CONFIGURATION ---
+  // IMPORTANT: You must paste your apiKey and appId from Project Settings
   const firebaseConfig = {
-    databaseURL: "https://fummsa-creatives-9e579-default-rtdb.europe-west1.firebasedatabase.app/"
+    apiKey: "YOUR_API_KEY_HERE",
+    authDomain: "fummsa-creatives-9e579.firebaseapp.com",
+    projectId: "fummsa-creatives-9e579",
+    databaseURL: "https://fummsa-creatives-9e579-default-rtdb.europe-west1.firebasedatabase.app/",
+    storageBucket: "fummsa-creatives-9e579.appspot.com",
+    appId: "YOUR_APP_ID_HERE"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -79,10 +137,12 @@
   let referrerUid = ""; 
   let allVotesData = null;
 
+  // --- APP INITIALIZATION ---
   window.onload = () => {
     const urlParams = new URLSearchParams(window.location.search);
     referrerUid = clean(urlParams.get('ref') || "");
     const savedUser = sessionStorage.getItem("fow_user");
+    
     if (savedUser) showDashboard(savedUser, true);
     else if (referrerUid) showDashboard(referrerUid, false);
   };
@@ -91,7 +151,7 @@
     document.getElementById('regSection').classList.add('hidden');
     document.getElementById('refSection').classList.remove('hidden');
     if (isOwner) {
-      document.getElementById('refTitle').innerText = "Dashboard: " + id;
+      document.getElementById('refTitle').innerText = "Contestant: " + id;
       document.getElementById('contestantControls').classList.remove('hidden');
       document.getElementById('votingInputs').classList.add('hidden'); 
     } else {
@@ -101,13 +161,17 @@
     }
   }
 
+  // --- DATABASE SYNC ---
   onValue(ref(db, '/'), (snap) => {
     const root = snap.val() || {};
     const participants = root.participants || {};
     allVotesData = root.usedHandles || {}; 
 
-    document.getElementById('slotsLeft').innerText = Math.max(0, 20 - Object.keys(participants).length);
+    // Update Counter
+    currentCount = Object.keys(participants).length;
+    document.getElementById('slotsLeft').innerText = Math.max(0, 20 - currentCount);
     
+    // Build Leaderboard
     const list = document.getElementById('leaderboard');
     list.innerHTML = "";
     Object.values(participants).sort((a,b) => b.points - a.points).forEach((p, i) => {
@@ -115,64 +179,81 @@
     });
   });
 
+  // --- CORE ACTIONS ---
   document.getElementById('registrationForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (currentCount >= 20) return alert("Registration is full (20/20)!");
+    
     const name = document.getElementById('regName').value.trim();
     const username = clean(document.getElementById('regUsername').value);
+    
     try {
         await set(ref(db, 'participants/' + username), { name: name, points: 0 });
         sessionStorage.setItem("fow_user", username);
         location.reload(); 
     } catch (err) {
-        alert("Permission Denied. Please ensure ezrielleverse.github.io is added to Authorized Domains in Firebase Console.");
+        alert("Permission Denied: Ensure 'ezrielleverse.github.io' is authorized in Firebase Settings.");
     }
   });
 
   document.getElementById('referralForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const friend = clean(document.getElementById('friendHandle').value);
-    if (!referrerUid || referrerUid === sessionStorage.getItem("fow_user")) return alert("Self-voting disabled!");
+    
+    if (!referrerUid || referrerUid === sessionStorage.getItem("fow_user")) {
+        return alert("Error: You cannot vote for yourself!");
+    }
 
     const usedSnap = await get(ref(db, 'usedHandles/' + friend));
-    if (usedSnap.exists()) return alert("Already voted!");
+    if (usedSnap.exists()) return alert("Error: This TikTok handle has already voted!");
 
-    const contestantSnap = await get(ref(db, 'participants/' + referrerUid));
-    if (!contestantSnap.exists()) return alert("Contestant not found.");
+    const contestantRef = ref(db, 'participants/' + referrerUid);
+    const contestantSnap = await get(contestantRef);
+    if (!contestantSnap.exists()) return alert("Error: Contestant no longer exists.");
 
-    await update(ref(db, 'participants/' + referrerUid), { points: (contestantSnap.val().points || 0) + 1 });
-    await set(ref(db, 'usedHandles/' + friend), { votedFor: referrerUid, time: new Date().toLocaleString() });
-    alert("Point awarded!");
+    await update(contestantRef, { points: (contestantSnap.val().points || 0) + 1 });
+    await set(ref(db, 'usedHandles/' + friend), { 
+        votedFor: referrerUid, 
+        time: new Date().toLocaleTimeString() 
+    });
+    
+    alert("Success: Point awarded to " + referrerUid + "!");
     e.target.reset();
   });
 
+  // --- ADMIN & TOOLS ---
   window.viewVotes = () => {
-    const pass = prompt("Admin Password:");
+    const pass = prompt("Admin Password Required:");
     if (pass === "FUMMSA2026") {
+        document.getElementById('adminContainer').classList.remove('hidden');
+        document.getElementById('csvBtn').classList.remove('hidden');
         const list = document.getElementById('adminVoteList');
         list.innerHTML = "";
-        document.getElementById('csvBtn').classList.remove('hidden');
-        if (!allVotesData) return list.innerHTML = "No votes yet.";
         for (let friend in allVotesData) {
-            list.innerHTML += `<li><b>@${friend}</b> voted for <b>${allVotesData[friend].votedFor}</b></li>`;
+            list.innerHTML += `<tr><td>@${friend}</td><td>${allVotesData[friend].votedFor}</td><td>${allVotesData[friend].time}</td></tr>`;
         }
-    } else alert("Wrong Password!");
+    } else alert("Invalid Password.");
   };
 
   window.downloadCSV = () => {
-    let csvContent = "data:text/csv;charset=utf-8,Voter Handle,Voted For,Time\n";
+    let csv = "Voter,Supported_Contestant,Timestamp\n";
     for (let friend in allVotesData) {
-        csvContent += `${friend},${allVotesData[friend].votedFor},${allVotesData[friend].time}\n`;
+        csv += `@${friend},${allVotesData[friend].votedFor},${allVotesData[friend].time}\n`;
     }
-    const link = document.createElement("a");
-    link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", "FUMMSA_Votes.csv");
-    document.body.appendChild(link);
-    link.click();
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'FUMMSA_Final_Votes.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   document.getElementById('shareBtn').onclick = () => {
-    const currentPath = window.location.origin + window.location.pathname;
-    navigator.clipboard.writeText(currentPath + "?ref=" + sessionStorage.getItem("fow_user")).then(() => alert("Copied!"));
+    const url = window.location.origin + window.location.pathname + "?ref=" + sessionStorage.getItem("fow_user");
+    navigator.clipboard.writeText(url).then(() => alert("Your unique referral link is copied!"));
   };
 
   window.logout = () => {
